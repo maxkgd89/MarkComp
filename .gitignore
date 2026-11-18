@@ -1,0 +1,7 @@
+node_modules/
+out/
+dist/
+.npm-cache/
+.userdata/
+*.log
+.DS_Store

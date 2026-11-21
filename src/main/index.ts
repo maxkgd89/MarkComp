@@ -1,19 +1,33 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
-import { join } from 'path'
+import { dirname, join } from 'path'
 import { readFile, writeFile } from 'fs/promises'
 import { mkdirSync } from 'fs'
 
 // --- Launch compatibility -------------------------------------------------
 // Chromium's sandbox and the default user-data location both crash this
-// Electron build in the current Windows environment (0xC0000005). The process
-// is only able to write inside the project directory, so use a workspace-local
-// user-data folder and fall back to the OS locations only if needed. The npm
-// scripts also pass --noSandbox.
-const dataDirCandidates = [
-  join(app.getAppPath(), '.userdata'),
-  join(app.getPath('appData'), 'markdown-review-studio'),
-  join(app.getPath('temp'), 'markdown-review-studio')
-]
+// Electron build in the current Windows environment (0xC0000005). Development
+// runs therefore use a workspace-local user-data folder, while packaged builds
+// keep data next to the portable executable or in the OS app-data directory.
+// The npm scripts also pass --noSandbox.
+const dataDirCandidates: string[] = []
+
+// electron-builder's portable target reports the folder the user launched from;
+// the process itself runs from a temporary extraction directory.
+const portableDir = process.env['PORTABLE_EXECUTABLE_DIR']
+if (portableDir) dataDirCandidates.push(join(portableDir, 'userdata'))
+
+if (app.isPackaged) {
+  // Keep data beside a per-user install or unpacked build when that folder is
+  // writable; fall back to app-data folders otherwise.
+  dataDirCandidates.push(
+    join(dirname(app.getPath('exe')), 'userdata'),
+    join(app.getPath('appData'), 'markdown-review-studio')
+  )
+} else {
+  dataDirCandidates.unshift(join(app.getAppPath(), '.userdata'))
+}
+
+dataDirCandidates.push(join(app.getPath('temp'), 'markdown-review-studio'))
 
 let dataDir: string | undefined
 for (const candidate of dataDirCandidates) {
@@ -81,6 +95,7 @@ function registerIpc(): void {
   ipcMain.handle('sample:load', async () => {
     const candidates = [
       join(app.getAppPath(), 'samples', 'sample.md'),
+      join(process.resourcesPath, 'samples', 'sample.md'),
       join(process.cwd(), 'samples', 'sample.md')
     ]
     for (const candidate of candidates) {
@@ -112,6 +127,7 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId('com.markcomp.markdownreviewstudio')
   registerIpc()
   createWindow()
 

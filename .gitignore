@@ -3,5 +3,6 @@ out/
 dist/
 .npm-cache/
 .userdata/
+build/launcher.exe
 *.log
 .DS_Store

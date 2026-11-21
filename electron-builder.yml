@@ -1,0 +1,41 @@
+appId: com.markcomp.markdownreviewstudio
+productName: Markdown Review Studio
+copyright: Copyright © 2026 maxkgd89
+afterPack: build/after-pack.cjs
+directories:
+  output: dist
+  buildResources: build
+# Renderer and main are fully bundled by electron-vite, so the runtime does not
+# need node_modules. Samples are packaged inside app.asar for the sample loader.
+files:
+  - out/**/*
+  - samples/**/*
+  - package.json
+  - "!node_modules/**/*"
+  - "!**/*.map"
+asar: true
+npmRebuild: false
+win:
+  icon: icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  requestedExecutionLevel: asInvoker
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Markdown Review Studio
+  artifactName: ${productName}-Setup-${version}.${ext}
+  deleteAppDataOnUninstall: false
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
+  unpackDirName: MarkdownReviewStudio
